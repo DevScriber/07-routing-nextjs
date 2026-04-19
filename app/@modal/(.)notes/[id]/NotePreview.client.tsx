@@ -1,30 +1,44 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { fetchNoteById } from "@/lib/api";
 import Modal from "@/components/Modal/Modal";
 import NotePreview from "@/components/NotePreview/NotePreview";
-import type Note from "@/types/note";
 
-interface Props {
-    params: Promise<{ id: string }>;
+interface NotePreviewClientProps {
+    id: string;
 }
 
-export default function NotePreviewClient({ params }: Props) {
+export default function NotePreviewClient({ id }: NotePreviewClientProps) {
     const router = useRouter();
-    const { id } = use(params);
-    const [note, setNote] = useState<Note | null>(null);
 
-    useEffect(() => {
-        fetchNoteById(id)
-            .then(setNote)
-            .catch((err) => console.error(err));
-    }, [id]);
+    const {
+        data: note,
+        isLoading,
+        isError,
+        error
+    } = useQuery({
+        queryKey: ["note", id],
+        queryFn: () => fetchNoteById(id),
+        refetchOnMount: false,
+    });
+
+    const handleClose = () => {
+        router.back();
+    };
 
     return (
-        <Modal onClose={() => router.back()}>
-            {note ? <NotePreview note={note} /> : <p>Loading...</p>}
+        <Modal onClose={handleClose}>
+            {isLoading && <p>Loading note...</p>}
+
+            {isError && (
+                <p style={{ color: "red" }}>
+                    Error: {error instanceof Error ? error.message : "Failed to load note"}
+                </p>
+            )}
+
+            {note && <NotePreview note={note} />}
         </Modal>
     );
 }
