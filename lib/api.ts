@@ -11,6 +11,7 @@ interface FetchNoteProps {
   page: number;
   perPage?: number;
   search: string;
+  tag?: string;
 }
 
 interface CreateNoteParams {
@@ -32,6 +33,7 @@ export async function fetchNotes({
   page,
   perPage = 12,
   search,
+  tag,
 }: FetchNoteProps): Promise<FetchNotesResponse> {
   try {
     const response = await axios.get<FetchNotesResponse>(url, {
@@ -40,6 +42,7 @@ export async function fetchNotes({
         page,
         perPage,
         search,
+        ...(tag && tag !== "all" ? { tag } : {}),
       },
     });
 
